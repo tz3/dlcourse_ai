@@ -1,3 +1,6 @@
+import os
+
+
 class Dataset:
     def __init__(self):
         self.index_by_token = {}
@@ -11,6 +14,4 @@ class Dataset:
         filename = os.path.join(folder, "datasetSentences.txt")
 
         with open(filename, "r", encoding="latin1") as f:
-            
-
-       
+            pass

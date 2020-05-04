@@ -2,7 +2,7 @@ import numpy as np
 
 
 def check_gradient(f, x, delta=1e-5, tol=1e-4):
-    """
+    '''
     Checks the implementation of analytical gradient by comparing
     it to numerical gradient using two-point formula
 
@@ -14,27 +14,36 @@ def check_gradient(f, x, delta=1e-5, tol=1e-4):
 
     Return:
       bool indicating whether gradients match or not
-    """
+    '''
+
     assert isinstance(x, np.ndarray)
     assert x.dtype == np.float
 
+    orig_x = x.copy()
     fx, analytic_grad = f(x)
-    analytic_grad = analytic_grad.copy()
+    print('analytic_grad = ', analytic_grad)
+    print('x= ', x)
+    assert np.all(np.isclose(orig_x, x, tol)), "Functions shouldn't modify input variables"
 
     assert analytic_grad.shape == x.shape
+    analytic_grad = analytic_grad.copy()
 
+    # We will go through every dimension of x and compute numeric
+    # derivative for it
     it = np.nditer(x, flags=['multi_index'], op_flags=['readwrite'])
     while not it.finished:
         ix = it.multi_index
         analytic_grad_at_ix = analytic_grad[ix]
-        numeric_grad_at_ix = 0
+        d = np.zeros_like(x, np.float)
+        d[ix] = delta
+        plus_delta, _ = f(x + d)
+        minus_delta, _ = f(x - d)
+        numeric_grad_at_ix = (plus_delta - minus_delta) / (2 * delta)
 
-        # TODO Copy from previous assignment
-        raise Exception("Not implemented!")
-
+        # TODO compute value of numeric gradient of f to idx
         if not np.isclose(numeric_grad_at_ix, analytic_grad_at_ix, tol):
             print("Gradients are different at %s. Analytic: %2.5f, Numeric: %2.5f" % (
-                  ix, analytic_grad_at_ix, numeric_grad_at_ix))
+                ix, analytic_grad_at_ix, numeric_grad_at_ix))
             return False
 
         it.iternext()
@@ -56,6 +65,7 @@ def check_layer_gradient(layer, x, delta=1e-5, tol=1e-4):
     Returns:
       bool indicating whether gradients match or not
     """
+    x = x.copy()
     output = layer.forward(x)
     output_weight = np.random.randn(*output.shape)
 
@@ -86,7 +96,11 @@ def check_layer_param_gradient(layer, x,
       bool indicating whether gradients match or not
     """
     param = layer.params()[param_name]
-    initial_w = param.value
+    batch_size, n_input = x.shape
+    if param_name == 'B':
+        initial_w = np.vstack((param.value.copy(),) * batch_size)
+    else:
+        initial_w = param.value
 
     output = layer.forward(x)
     output_weight = np.random.randn(*output.shape)

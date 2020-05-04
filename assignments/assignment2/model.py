@@ -1,6 +1,12 @@
 import numpy as np
 
-from layers import FullyConnectedLayer, ReLULayer, softmax_with_cross_entropy, l2_regularization
+from layers import FullyConnectedLayer, ReLULayer
+
+from assignments.assignment2.layers import softmax_with_cross_entropy
+
+
+def f(x):
+    return np.exp(x) / np.sum(np.exp(x))
 
 
 class TwoLayerNet:
@@ -17,8 +23,15 @@ class TwoLayerNet:
         reg, float - L2 regularization strength
         """
         self.reg = reg
+        self.n_input = n_input
+        self.n_output = n_output
+        self.hidden_layer_size = hidden_layer_size
         # TODO Create necessary layers
-        raise Exception("Not implemented!")
+        self.layers = (
+            FullyConnectedLayer(n_input, hidden_layer_size),
+            ReLULayer(),
+            FullyConnectedLayer(hidden_layer_size, n_output)
+        )
 
     def compute_loss_and_gradients(self, X, y):
         """
@@ -33,14 +46,29 @@ class TwoLayerNet:
         # clear parameter gradients aggregated from the previous pass
         # TODO Set parameter gradient to zeros
         # Hint: using self.params() might be useful!
-        raise Exception("Not implemented!")
+        assert X.shape[0] == y.shape[0]
+        for _name, param in self.params().items():
+            param.reset_grad()
+
+        # forward pass
+        out = X
+        for layer in self.layers:
+            out = layer.forward(out)
+
+        # backward pass
+        loss, grad = softmax_with_cross_entropy(out, y)
+        for layer in reversed(self.layers):
+            d_out = layer.backward(d_out)
+
+        # raise Exception("Not implemented!")
         
         # TODO Compute loss and fill param gradients
+
         # by running forward and backward passes through the model
-        
+
         # After that, implement l2 regularization on all params
         # Hint: self.params() is useful again!
-        raise Exception("Not implemented!")
+        # raise Exception("Not implemented!")
 
         return loss
 
@@ -66,7 +94,8 @@ class TwoLayerNet:
         result = {}
 
         # TODO Implement aggregating all of the params
-
-        raise Exception("Not implemented!")
+        for index, layer in enumerate(self.layers):
+            for name, param in layer.params().items():
+                result['%s_%s' % (index, name)] = param
 
         return result
